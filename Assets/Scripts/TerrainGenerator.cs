@@ -5,16 +5,24 @@ using UnityEngine;
 [RequireComponent(typeof(MeshFilter))]
 public class TerrainGenerator : MonoBehaviour
 {
-
+    public PerlinNoiseMap noiseMap;
     Vector3[] vertices;
     int[] triangles;
-    MeshFilter meshFilter;
+    public MeshFilter meshFilter;
     MeshCollider meshCollider;
     public int size;
     float maxHeight;
     float minHeight;
     public Gradient terrainGradient;
-    int seed;
+    int seed = 0;
+
+    [Range(0,10)]
+    public int octaves;
+    public float scale;
+    public float amplitude;
+    public float persistance;
+    public float frequency;
+    public float lacunarity;
 
     public GameObject water;
 
@@ -27,14 +35,22 @@ public class TerrainGenerator : MonoBehaviour
 
     void Awake()
     {
-        meshFilter = GetComponent<MeshFilter>();
+        noiseMap = new PerlinNoiseMap(0, 3, 0.005f, 1, 0.5f, 1, 2, -1000, 1000);
         meshCollider = GetComponent<MeshCollider>();
         meshFilter.mesh = CreateMesh();
     }
 
+    private void OnValidate()
+    {
+        noiseMap = new PerlinNoiseMap(0, octaves, scale, amplitude, persistance, frequency, lacunarity, -1000, 1000);
+        meshFilter.mesh.Clear();
+        meshFilter.sharedMesh = CreateMesh();
+        meshFilter.mesh.RecalculateNormals();
+    }
+
     private void Update()
     {
-        if (Input.GetKeyDown(KeyCode.E))
+        if(Input.GetKeyDown(KeyCode.Space))
         {
             meshFilter.mesh.Clear();
             seed = Random.Range(0, 10000);
@@ -43,20 +59,10 @@ public class TerrainGenerator : MonoBehaviour
         }
     }
 
-    private void OnValidate()
-    {
-        if (!meshFilter) return;
-        /*
-        meshFilter.mesh.Clear();
-        seed = Random.Range(0,10000);
-        meshCollider.sharedMesh = meshFilter.mesh = CreateMesh();
-        meshFilter.mesh.RecalculateNormals();*/
-    }
-
     Mesh CreateMesh()
     {
-        maxHeight = -99999;
-        minHeight = 999999;
+        maxHeight = -1000;
+        minHeight = 1000;
         Mesh mesh = new Mesh();
         mesh.vertices = vertices = CreateVertices();
         mesh.triangles = triangles = CreateTriangles();
@@ -75,15 +81,15 @@ public class TerrainGenerator : MonoBehaviour
             {
                 for (int z = 0; z < size; z++)
                 {
-                    vertices[i] = new Vector3(x, GetHeight(x,z), z);
+                    vertices[i] = new Vector3(x, noiseMap.GetPoint(x,z), z);
                     if (vertices[i].y > maxHeight) maxHeight = vertices[i].y;
                     if (vertices[i].y < minHeight) minHeight = vertices[i].y;
                     i++;
                 }
             }
         }
-        float waterLevel = (maxHeight + minHeight) * 0.40f;
-        water.transform.position = new Vector3(100f, waterLevel, 100f);
+        //float waterLevel = (maxHeight + minHeight) * 0.40f;
+        //water.transform.position = new Vector3(100f, waterLevel, 100f);
         return vertices;
     }
 
@@ -130,7 +136,7 @@ public class TerrainGenerator : MonoBehaviour
 
     float GetHeight(float x)
     {
-        if (x < 0.15) return 0.45f;
+        if (x < 0.15) return 0.40f;
         else return 179.3f * Mathf.Pow(x, 7) - 400.38f * Mathf.Pow(x, 6) + 27.3f * Mathf.Pow(x, 5) + 592.5f * Mathf.Pow(x, 4) - 600f * Mathf.Pow(x, 3) + 240f * Mathf.Pow(x, 2) - 40f * x + 2.73f;
 
     }
