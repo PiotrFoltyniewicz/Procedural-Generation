@@ -23,6 +23,7 @@ public class TerrainGenerator : MonoBehaviour
     public float persistance;
     public float frequency;
     public float lacunarity;
+    public AnimationCurve redistribution;
 
     public GameObject water;
 
@@ -36,25 +37,17 @@ public class TerrainGenerator : MonoBehaviour
     void Awake()
     {
         noiseMap = new PerlinNoiseMap(0, 3, 0.005f, 1, 0.5f, 1, 2, -1000, 1000);
-        meshCollider = GetComponent<MeshCollider>();
-        meshFilter.mesh = CreateMesh();
-    }
-
-    private void OnValidate()
-    {
-        noiseMap = new PerlinNoiseMap(0, octaves, scale, amplitude, persistance, frequency, lacunarity, -1000, 1000);
-        meshFilter.mesh.Clear();
-        meshFilter.sharedMesh = CreateMesh();
-        meshFilter.mesh.RecalculateNormals();
+        //meshCollider = GetComponent<MeshCollider>();
     }
 
     private void Update()
     {
         if(Input.GetKeyDown(KeyCode.Space))
         {
+            noiseMap = new PerlinNoiseMap(0, octaves, scale, amplitude, persistance, frequency, lacunarity, -1000, 1000);
             meshFilter.mesh.Clear();
-            seed = Random.Range(0, 10000);
-            meshCollider.sharedMesh = meshFilter.mesh = CreateMesh();
+            //meshCollider.sharedMesh = 
+            meshFilter.mesh = CreateMesh();
             meshFilter.mesh.RecalculateNormals();
         }
     }
@@ -81,12 +74,18 @@ public class TerrainGenerator : MonoBehaviour
             {
                 for (int z = 0; z < size; z++)
                 {
-                    vertices[i] = new Vector3(x, noiseMap.GetPoint(x,z), z);
+                    float y = noiseMap.GetPoint(x, z);
+                    vertices[i] = new Vector3(x, y, z);
                     if (vertices[i].y > maxHeight) maxHeight = vertices[i].y;
                     if (vertices[i].y < minHeight) minHeight = vertices[i].y;
                     i++;
                 }
             }
+        }
+        for (int i = 0; i < vertices.Length; i++)
+        {
+            float y = Mathf.InverseLerp(minHeight, maxHeight, vertices[i].y);
+            vertices[i].y = redistribution.Evaluate(y) * amplitude;
         }
         //float waterLevel = (maxHeight + minHeight) * 0.40f;
         //water.transform.position = new Vector3(100f, waterLevel, 100f);
