@@ -2,112 +2,150 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-[RequireComponent(typeof(MeshFilter))]
 public class TerrainGenerator : MonoBehaviour
 {
-    public PerlinNoiseMap noiseMap;
-    Vector3[] vertices;
-    int[] triangles;
-    public MeshFilter meshFilter;
-    MeshCollider meshCollider;
-    public int size;
-    float maxHeight;
-    float minHeight;
-    public Gradient terrainGradient;
-    int seed = 0;
+    private PerlinNoiseMap _landMap;
 
-    [Range(0,10)]
+    public Gradient terrainGradient;
+    public int seed;
     public int octaves;
     public float scale;
     public float amplitude;
     public float persistance;
     public float frequency;
     public float lacunarity;
+    public int chunkSize;
     public AnimationCurve redistribution;
 
-    public GameObject water;
+    public GameObject chunkPrefab;
+    private Transform _player;
+    public int renderDistance;
 
-    enum Biomes
-    {
-        Plains, 
-        Mountains, 
-        Ocean
-    }
-
+    private Dictionary<Vector2, Chunk> _chunks = new Dictionary<Vector2, Chunk>();
     void Awake()
     {
-        noiseMap = new PerlinNoiseMap(0, 3, 0.005f, 1, 0.5f, 1, 2, -1000, 1000);
-        //meshCollider = GetComponent<MeshCollider>();
+        _player = GameObject.FindGameObjectWithTag("Player").transform;
+        _landMap = new PerlinNoiseMap(0, octaves, scale, amplitude, persistance, frequency, lacunarity);
     }
 
-    private void Update()
+    void Update()
     {
-        if(Input.GetKeyDown(KeyCode.Space))
+        RenderChunks();
+    }
+
+    void RenderChunks()
+    {
+        int mapChunkSize = chunkSize - 1;
+        int currChunkX = (int)_player.position.x / mapChunkSize;
+        int currChunkZ = (int)_player.position.z / mapChunkSize;
+
+        List<Vector2> tempKeysList = new List<Vector2>();
+
+        for (int x = -renderDistance; x <= renderDistance; x++)
         {
-            noiseMap = new PerlinNoiseMap(0, octaves, scale, amplitude, persistance, frequency, lacunarity, -1000, 1000);
-            meshFilter.mesh.Clear();
-            //meshCollider.sharedMesh = 
-            meshFilter.mesh = CreateMesh();
-            meshFilter.mesh.RecalculateNormals();
+            for (int z = -renderDistance; z <= renderDistance; z++)
+            {
+                int chunkX = (currChunkX + x) * mapChunkSize;
+                int chunkZ = (currChunkZ + z) * mapChunkSize;
+                tempKeysList.Add(new Vector2(chunkX, chunkZ));
+
+                if (!_chunks.ContainsKey(new Vector2(chunkX, chunkZ)))
+                {
+                    SpawnChunk(chunkX, chunkZ);
+                }
+                else if(!_chunks[new Vector2(chunkX, chunkZ)].Visible)
+                {
+                    _chunks[new Vector2(chunkX, chunkZ)].UpdateChunk(true);
+                }
+            }
+        }
+
+        foreach(Vector2 key in _chunks.Keys)
+        {
+            if (!tempKeysList.Contains(key))
+            {
+                _chunks[key].UpdateChunk(false);
+            }
         }
     }
 
-    Mesh CreateMesh()
+    void OnValidate()
     {
-        maxHeight = -1000;
-        minHeight = 1000;
-        Mesh mesh = new Mesh();
-        mesh.vertices = vertices = CreateVertices();
-        mesh.triangles = triangles = CreateTriangles();
-        mesh.colors = CreateColors();
+        if (Application.isPlaying && _chunks.Count > 0)
+        {
+            _landMap = new PerlinNoiseMap(0, octaves, scale, amplitude, persistance, frequency, lacunarity);
+            ReloadChunks();
+        }
+    }
+    void ReloadChunks()
+    {
+        foreach (Chunk chunk in _chunks.Values)
+        {
+            Vector3[] vertices = CreateVertices(chunk.transform.position.x, chunk.transform.position.z);
+            int[] triangles = CreateTriangles();
+            Color[] colors = CreateColors(vertices);
+            RedistributeVertices(ref vertices);
 
-        return mesh;
+            chunk.CreateMesh(vertices, triangles, colors);
+        }
     }
 
-    Vector3[] CreateVertices()
+    void SpawnChunk(float x, float z)
     {
-        Vector3[] vertices = new Vector3[size * size];
+        Vector3[] vertices = CreateVertices(x, z);
+        int[] triangles = CreateTriangles();
+        Color[] colors = CreateColors(vertices);
+        RedistributeVertices(ref vertices);
 
-        for(int i = 0; i < vertices.Length;)
+        GameObject chunk = Instantiate(chunkPrefab, new Vector3(x, 0, z), Quaternion.identity, null);
+        chunk.GetComponent<Chunk>().CreateMesh(vertices, triangles, colors);
+        _chunks.Add(new Vector2(x, z), chunk.GetComponent<Chunk>());
+    }
+
+    void RedistributeVertices(ref Vector3[] vertices)
+    {
+        for (int i = 0; i < vertices.Length; i++)
         {
-            for(int x = 0; x < size; x++)
+            float y = Mathf.InverseLerp(_landMap.MinHeight, _landMap.MaxHeight, vertices[i].y);
+            vertices[i].y += redistribution.Evaluate(y) * amplitude;
+        }
+    }
+
+    Vector3[] CreateVertices(float offsetX, float offsetY)
+    {
+        Vector3[] vertices = new Vector3[chunkSize * chunkSize];
+
+        for (int i = 0; i < vertices.Length;)
+        {
+            for (int x = 0; x < chunkSize; x++)
             {
-                for (int z = 0; z < size; z++)
+                for (int z = 0; z < chunkSize; z++)
                 {
-                    float y = noiseMap.GetPoint(x, z);
+                    float y = _landMap.GetPoint(x + offsetX, z + offsetY);
                     vertices[i] = new Vector3(x, y, z);
-                    if (vertices[i].y > maxHeight) maxHeight = vertices[i].y;
-                    if (vertices[i].y < minHeight) minHeight = vertices[i].y;
                     i++;
                 }
             }
         }
-        for (int i = 0; i < vertices.Length; i++)
-        {
-            float y = Mathf.InverseLerp(minHeight, maxHeight, vertices[i].y);
-            vertices[i].y = redistribution.Evaluate(y) * amplitude;
-        }
-        //float waterLevel = (maxHeight + minHeight) * 0.40f;
-        //water.transform.position = new Vector3(100f, waterLevel, 100f);
         return vertices;
     }
 
     int[] CreateTriangles()
     {
-        int[] triangles = new int[size * size * 6];
+        int[] triangles = new int[chunkSize * chunkSize * 6];
 
         // each loop is to generate triangles for each quad
         int currVertex = 0;
-        for(int x = 0; x < size - 1; x++)
+        for (int x = 0; x < chunkSize - 1; x++)
         {
-            for(int z = 0; z < size - 1; z++)
+            for (int z = 0; z < chunkSize - 1; z++)
             {
-                triangles[currVertex] = x * size + z + size + 1;
-                triangles[currVertex + 1] = x * size + z + size;
-                triangles[currVertex + 2] = x * size + z;
-                triangles[currVertex + 3] = x * size + z ;
-                triangles[currVertex + 4] = x * size + z + 1;
-                triangles[currVertex + 5] = x * size + z + size + 1;
+                triangles[currVertex] = x * chunkSize + z + chunkSize + 1;
+                triangles[currVertex + 1] = x * chunkSize + z + chunkSize;
+                triangles[currVertex + 2] = x * chunkSize + z;
+                triangles[currVertex + 3] = x * chunkSize + z;
+                triangles[currVertex + 4] = x * chunkSize + z + 1;
+                triangles[currVertex + 5] = x * chunkSize + z + chunkSize + 1;
 
                 currVertex += 6;
             }
@@ -115,29 +153,15 @@ public class TerrainGenerator : MonoBehaviour
         return triangles;
     }
 
-    Color[] CreateColors()
+    Color[] CreateColors(Vector3[] vertices)
     {
-        Color[] colors = new Color[size * size];
+        Color[] colors = new Color[chunkSize * chunkSize];
 
         for (int i = 0; i < colors.Length; i++)
         {
-            float height = Mathf.InverseLerp(minHeight, maxHeight, vertices[i].y);
+            float height = Mathf.InverseLerp(_landMap.MinHeight, _landMap.MaxHeight, vertices[i].y);
             colors[i] = terrainGradient.Evaluate(height);
         }
         return colors;
     }
-
-    float GetHeight(int x, int z)
-    {
-        float biomeY = Mathf.PerlinNoise(x * 0.01f + seed, z * 0.01f + seed);
-        return Mathf.PerlinNoise(x * 0.6f + seed, z * 0.6f + seed) * 2f + GetHeight(biomeY) * 50;
-    }
-
-    float GetHeight(float x)
-    {
-        if (x < 0.15) return 0.40f;
-        else return 179.3f * Mathf.Pow(x, 7) - 400.38f * Mathf.Pow(x, 6) + 27.3f * Mathf.Pow(x, 5) + 592.5f * Mathf.Pow(x, 4) - 600f * Mathf.Pow(x, 3) + 240f * Mathf.Pow(x, 2) - 40f * x + 2.73f;
-
-    }
-
 }

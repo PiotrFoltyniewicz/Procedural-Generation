@@ -11,11 +11,12 @@ public sealed class PerlinNoiseMap
     private float _persistence;
     private float _frequency;
     private float _lacunarity;
-    private float _minHeight;
-    private float _maxHeight;
     private Vector2[] _octaveOffsets;
 
-    public PerlinNoiseMap(int seed, int octaves, float scale, float amplitude, float persistence, float frequency, float lacunarity, float minHeight, float maxHeight)
+    public float MinHeight { get;}
+    public float MaxHeight { get;}
+
+    public PerlinNoiseMap(int seed, int octaves, float scale, float amplitude, float persistence, float frequency, float lacunarity)
     {
         _seed = seed;
         _octaves = octaves;
@@ -23,16 +24,24 @@ public sealed class PerlinNoiseMap
         _amplitude = amplitude;
         _frequency = frequency;
         _lacunarity = lacunarity;
-        _minHeight = minHeight;
-        _maxHeight = maxHeight;
         _persistence = persistence;
         _octaveOffsets = new Vector2[octaves];
+        MinHeight = 0;
+        MaxHeight = 0;
 
         for (int i = 0; i < _octaves; i++)
         {
             _octaveOffsets[i] = new Vector2(Random.Range(-10000, 10000), Random.Range(-10000, 10000));
+            //_octaveOffsets[i] = new Vector2(0, 0);
         }
         _persistence = persistence;
+
+        float tempAmplitude = amplitude;
+        for(int i = 0; i < _octaves; i++)
+        {
+            MaxHeight += tempAmplitude;
+            tempAmplitude *= persistence;
+        }
     }
 
     public float GetPoint(float x, float y)
@@ -46,11 +55,12 @@ public sealed class PerlinNoiseMap
             float offsetX = x / _scale * tempFrequency + _octaveOffsets[i].x;
             float offsetY = y / _scale * tempFrequency + _octaveOffsets[i].y;
 
-            height += (Mathf.PerlinNoise(_seed + offsetX + 0.5f, _seed + offsetY + 0.5f) * 2 - 1) * tempAmplitude;
+            height += (Mathf.Clamp01(Mathf.PerlinNoise(_seed + offsetX + 0.5f, _seed + offsetY + 0.5f))) * tempAmplitude;
             tempAmplitude *= _persistence;
             tempFrequency *= _lacunarity;
         }
-        
-        return Mathf.Clamp(height, _minHeight, _maxHeight);
+
+
+        return height;
     }
 }

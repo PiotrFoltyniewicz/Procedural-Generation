@@ -6,6 +6,7 @@ public class PlayerController : MonoBehaviour
 {
     CharacterController controller;
     public float movementSpeed;
+    public float verticalSpeed;
     public float mouseSensitivity;
     float mouseX, mouseY;
     float xRotation;
@@ -23,6 +24,8 @@ public class PlayerController : MonoBehaviour
     {
         Vector3 move = transform.right * Input.GetAxis("Horizontal") + transform.forward * Input.GetAxis("Vertical");
         controller.Move(move * Time.deltaTime * movementSpeed);
+
+        transform.position += new Vector3(0, Input.GetAxis("Jump") * verticalSpeed, 0);
 
         mouseX = Input.GetAxis("Mouse X") * mouseSensitivity * Time.deltaTime;
         mouseY = Input.GetAxis("Mouse Y") * mouseSensitivity * Time.deltaTime;
