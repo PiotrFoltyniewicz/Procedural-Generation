@@ -5,27 +5,34 @@ using UnityEngine;
 public class TerrainGenerator : MonoBehaviour
 {
     private PerlinNoiseMap _landMap;
+    private PerlinNoiseMap _erosionMap;
+    private PerlinNoiseMap _mountainsnessMap;
+    //private BiomeManager _biomeManager;
+
+    private float _maxHeight;
+    private float _minHeight;
 
     public Gradient terrainGradient;
-    public int seed;
-    public int octaves;
     public float scale;
-    public float amplitude;
-    public float persistance;
-    public float frequency;
-    public float lacunarity;
     public int chunkSize;
-    public AnimationCurve redistribution;
 
     public GameObject chunkPrefab;
     private Transform _player;
     public int renderDistance;
 
     private Dictionary<Vector2, Chunk> _chunks = new Dictionary<Vector2, Chunk>();
+
+    public List<MapParameters> parameters;
     void Awake()
     {
+        //_biomeManager = GetComponent<BiomeManager>();
         _player = GameObject.FindGameObjectWithTag("Player").transform;
-        _landMap = new PerlinNoiseMap(0, octaves, scale, amplitude, persistance, frequency, lacunarity);
+        _landMap = new PerlinNoiseMap(0, parameters[0].octaves, scale, parameters[0].amplitude, parameters[0].persistance, parameters[0].frequency, parameters[0].lacunarity);
+        _erosionMap = new PerlinNoiseMap(0, parameters[1].octaves, scale, parameters[1].amplitude, parameters[1].persistance, parameters[1].frequency, parameters[1].lacunarity);
+        _mountainsnessMap = new PerlinNoiseMap(0, parameters[2].octaves, scale, parameters[2].amplitude, parameters[2].persistance, parameters[2].frequency, parameters[2].lacunarity);
+        
+        _maxHeight = _landMap.MaxHeight;
+        _minHeight = _landMap.MinHeight;
     }
 
     void Update()
@@ -69,11 +76,17 @@ public class TerrainGenerator : MonoBehaviour
         }
     }
 
+    
     void OnValidate()
     {
         if (Application.isPlaying && _chunks.Count > 0)
         {
-            _landMap = new PerlinNoiseMap(0, octaves, scale, amplitude, persistance, frequency, lacunarity);
+            _landMap = new PerlinNoiseMap(0, parameters[0].octaves, scale, parameters[0].amplitude, parameters[0].persistance, parameters[0].frequency, parameters[0].lacunarity);
+            _erosionMap = new PerlinNoiseMap(0, parameters[1].octaves, scale, parameters[1].amplitude, parameters[1].persistance, parameters[1].frequency, parameters[1].lacunarity);
+            _mountainsnessMap = new PerlinNoiseMap(0, parameters[2].octaves, scale, parameters[2].amplitude, parameters[2].persistance, parameters[2].frequency, parameters[2].lacunarity);
+
+            _maxHeight = _landMap.MaxHeight;
+            _minHeight = _landMap.MinHeight;
             ReloadChunks();
         }
     }
@@ -84,34 +97,34 @@ public class TerrainGenerator : MonoBehaviour
             Vector3[] vertices = CreateVertices(chunk.transform.position.x, chunk.transform.position.z);
             int[] triangles = CreateTriangles();
             Color[] colors = CreateColors(vertices);
-            RedistributeVertices(ref vertices);
 
             chunk.CreateMesh(vertices, triangles, colors);
         }
     }
-
+    
     void SpawnChunk(float x, float z)
     {
+        //Biome[] biomes = new Biome[chunkSize * chunkSize];
         Vector3[] vertices = CreateVertices(x, z);
         int[] triangles = CreateTriangles();
         Color[] colors = CreateColors(vertices);
-        RedistributeVertices(ref vertices);
 
         GameObject chunk = Instantiate(chunkPrefab, new Vector3(x, 0, z), Quaternion.identity, null);
         chunk.GetComponent<Chunk>().CreateMesh(vertices, triangles, colors);
         _chunks.Add(new Vector2(x, z), chunk.GetComponent<Chunk>());
     }
 
-    void RedistributeVertices(ref Vector3[] vertices)
+    /*
+    void RedistributeVertices(ref Vector3[] vertices, Biome[] biomes)
     {
         for (int i = 0; i < vertices.Length; i++)
         {
             float y = Mathf.InverseLerp(_landMap.MinHeight, _landMap.MaxHeight, vertices[i].y);
-            vertices[i].y += redistribution.Evaluate(y) * amplitude;
+            vertices[i].y = biomes[i].redistribution.Evaluate(y) * amplitude;
         }
     }
-
-    Vector3[] CreateVertices(float offsetX, float offsetY)
+    */
+    Vector3[] CreateVertices(float offsetX, float offsetZ)
     {
         Vector3[] vertices = new Vector3[chunkSize * chunkSize];
 
@@ -121,13 +134,33 @@ public class TerrainGenerator : MonoBehaviour
             {
                 for (int z = 0; z < chunkSize; z++)
                 {
-                    float y = _landMap.GetPoint(x + offsetX, z + offsetY);
-                    vertices[i] = new Vector3(x, y, z);
+
+                    float height = GetHeight(x + offsetX,z + offsetZ);
+                    vertices[i] = new Vector3(x, height, z);
                     i++;
                 }
             }
         }
         return vertices;
+    }
+
+    float GetHeight(float x, float z)
+    {
+        float landHeight = _landMap.GetPoint(x, z);
+        float clampedLandHeight = Mathf.InverseLerp(_landMap.MinHeight, _landMap.MaxHeight, landHeight);
+        float height = landHeight;
+        float erosion = _erosionMap.GetPoint(x, z);
+        float mountainsness = _mountainsnessMap.GetPoint(x, z);
+
+        
+        float mountainsnessStrength = mountainsness * parameters[1].redistribution.Evaluate(clampedLandHeight);
+        float erosionStrength = erosion * parameters[0].redistribution.Evaluate(mountainsness);
+
+        height *= parameters[0].redistribution.Evaluate(clampedLandHeight);
+        height += parameters[2].redistribution.Evaluate(mountainsnessStrength) * 10;
+        height -= parameters[1].redistribution.Evaluate(erosion) * erosionStrength;
+
+        return height;
     }
 
     int[] CreateTriangles()

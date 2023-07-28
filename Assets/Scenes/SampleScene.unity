@@ -360,6 +360,7 @@ GameObject:
   m_Component:
   - component: {fileID: 863829644}
   - component: {fileID: 863829645}
+  - component: {fileID: 863829646}
   m_Layer: 0
   m_Name: MapGenerator
   m_TagString: Untagged
@@ -399,19 +400,19 @@ MonoBehaviour:
     key0: {r: 0.0021359965, g: 0.24803665, b: 0.4528302, a: 1}
     key1: {r: 0.07418867, g: 0.46176445, b: 0.60156894, a: 1}
     key2: {r: 0.5377358, g: 0.4990234, b: 0.063412234, a: 0}
-    key3: {r: 0.05762727, g: 0.3301887, b: 0.1488206, a: 0}
-    key4: {r: 0.11903704, g: 0.23584908, b: 0.15712793, a: 0}
-    key5: {r: 0.36101452, g: 0.3621416, b: 0.36136672, a: 0}
-    key6: {r: 0.5380866, g: 0.5559036, b: 0.5436544, a: 0}
+    key3: {r: 0.06697223, g: 0.3301887, b: 0.15879197, a: 0}
+    key4: {r: 0.05762727, g: 0.3301887, b: 0.1488206, a: 0}
+    key5: {r: 0.4056604, g: 0.4056604, b: 0.4056604, a: 0}
+    key6: {r: 0.4716981, g: 0.4716981, b: 0.4716981, a: 0}
     key7: {r: 1, g: 1, b: 1, a: 0}
     ctime0: 193
-    ctime1: 14071
-    ctime2: 16384
-    ctime3: 21010
-    ctime4: 33346
-    ctime5: 42598
-    ctime6: 54741
-    ctime7: 58789
+    ctime1: 11565
+    ctime2: 13685
+    ctime3: 16962
+    ctime4: 39321
+    ctime5: 46260
+    ctime6: 60138
+    ctime7: 63222
     atime0: 0
     atime1: 65535
     atime2: 0
@@ -423,49 +424,365 @@ MonoBehaviour:
     m_Mode: 0
     m_NumColorKeys: 8
     m_NumAlphaKeys: 2
-  seed: 0
-  octaves: 4
-  scale: 200
-  amplitude: 100
-  persistance: 0.2
-  frequency: 1
-  lacunarity: 5
-  chunkSize: 25
-  redistribution:
-    serializedVersion: 2
-    m_Curve:
-    - serializedVersion: 3
-      time: 0
-      value: 0
-      inSlope: 0.10126805
-      outSlope: 0.10126805
-      tangentMode: 0
-      weightedMode: 0
-      inWeight: 0
-      outWeight: 0.13735043
-    - serializedVersion: 3
-      time: 0.8612534
-      value: 0.5771072
-      inSlope: 2.696982
-      outSlope: 2.696982
-      tangentMode: 0
-      weightedMode: 0
-      inWeight: 0.33333334
-      outWeight: 0.33333334
-    - serializedVersion: 3
-      time: 0.9999925
-      value: 2.001464
-      inSlope: 6.862491
-      outSlope: 6.862491
-      tangentMode: 0
-      weightedMode: 0
-      inWeight: 0.04336628
-      outWeight: 0
-    m_PreInfinity: 2
-    m_PostInfinity: 2
-    m_RotationOrder: 4
+  scale: 500
+  chunkSize: 50
   chunkPrefab: {fileID: 2265266536919918344, guid: a82c9c3f01a232749810d9f8e86ba3f6, type: 3}
-  renderDistance: 25
+  renderDistance: 15
+  parameters:
+  - name: LandMap
+    seed: 0
+    octaves: 2
+    amplitude: 50
+    persistance: 0.2
+    frequency: 1
+    lacunarity: 5
+    redistribution:
+      serializedVersion: 2
+      m_Curve:
+      - serializedVersion: 3
+        time: 0
+        value: 0
+        inSlope: 0.20261931
+        outSlope: 0.20261931
+        tangentMode: 34
+        weightedMode: 0
+        inWeight: 0
+        outWeight: 0.33333334
+      - serializedVersion: 3
+        time: 0.21574251
+        value: 0.0437136
+        inSlope: 1.1015619
+        outSlope: 1.1015619
+        tangentMode: 34
+        weightedMode: 3
+        inWeight: 0.33333334
+        outWeight: 0.33333334
+      - serializedVersion: 3
+        time: 0.34607017
+        value: 0.30443466
+        inSlope: 0.14164846
+        outSlope: 0.14164846
+        tangentMode: 0
+        weightedMode: 3
+        inWeight: 0.33333334
+        outWeight: 0.41004485
+      - serializedVersion: 3
+        time: 0.5264197
+        value: 0.41999772
+        inSlope: 3.1558208
+        outSlope: 3.1558208
+        tangentMode: 0
+        weightedMode: 3
+        inWeight: 0.27509394
+        outWeight: 0.27728167
+      - serializedVersion: 3
+        time: 0.65939176
+        value: 0.7621528
+        inSlope: 1.8296672
+        outSlope: 1.8296672
+        tangentMode: 0
+        weightedMode: 3
+        inWeight: 0.33333334
+        outWeight: 0.16884655
+      - serializedVersion: 3
+        time: 1.0061808
+        value: 0.9983802
+        inSlope: 0.11050793
+        outSlope: 0.11050793
+        tangentMode: 0
+        weightedMode: 1
+        inWeight: 0.5297869
+        outWeight: 0
+      m_PreInfinity: 2
+      m_PostInfinity: 2
+      m_RotationOrder: 4
+  - name: ErosionMap
+    seed: 67437
+    octaves: 4
+    amplitude: 1
+    persistance: 0.5
+    frequency: 4
+    lacunarity: 4
+    redistribution:
+      serializedVersion: 2
+      m_Curve:
+      - serializedVersion: 3
+        time: 0
+        value: -0.005240917
+        inSlope: 0.9335428
+        outSlope: 0.9335428
+        tangentMode: 34
+        weightedMode: 2
+        inWeight: 0
+        outWeight: 0.33333334
+      - serializedVersion: 3
+        time: 0.2748556
+        value: 0.25134856
+        inSlope: -1.3615329
+        outSlope: 1.5239781
+        tangentMode: 1
+        weightedMode: 3
+        inWeight: 0.38269246
+        outWeight: 0.1842652
+      - serializedVersion: 3
+        time: 0.5601588
+        value: 0.67124265
+        inSlope: 2.9522157
+        outSlope: -0.251441
+        tangentMode: 1
+        weightedMode: 3
+        inWeight: 0.24377723
+        outWeight: 0.364383
+      - serializedVersion: 3
+        time: 0.7089434
+        value: 0.37254673
+        inSlope: Infinity
+        outSlope: -0.3015431
+        tangentMode: 1
+        weightedMode: 3
+        inWeight: 0
+        outWeight: 0.33333334
+      - serializedVersion: 3
+        time: 1.0100098
+        value: 1.0093575
+        inSlope: 2.115184
+        outSlope: 2.115184
+        tangentMode: 34
+        weightedMode: 0
+        inWeight: 0.33333334
+        outWeight: 0
+      m_PreInfinity: 2
+      m_PostInfinity: 2
+      m_RotationOrder: 4
+  - name: MountainsnessMap
+    seed: 23424
+    octaves: 6
+    amplitude: 1
+    persistance: 0.2
+    frequency: 4
+    lacunarity: 5
+    redistribution:
+      serializedVersion: 2
+      m_Curve:
+      - serializedVersion: 3
+        time: 0.0004239399
+        value: 5.0337157
+        inSlope: 0
+        outSlope: 0
+        tangentMode: 0
+        weightedMode: 2
+        inWeight: 0
+        outWeight: 0.45573404
+      - serializedVersion: 3
+        time: 0.18663894
+        value: 1.1311238
+        inSlope: 3.2937622
+        outSlope: 3.2937622
+        tangentMode: 0
+        weightedMode: 3
+        inWeight: 0.26418364
+        outWeight: 0.30753297
+      - serializedVersion: 3
+        time: 0.26906762
+        value: 0.60353565
+        inSlope: 0.67337304
+        outSlope: 0.67337304
+        tangentMode: 0
+        weightedMode: 3
+        inWeight: 0.39995214
+        outWeight: 0.18164985
+      - serializedVersion: 3
+        time: 0.520628
+        value: 0.27921307
+        inSlope: -0.009846777
+        outSlope: -0.009846777
+        tangentMode: 0
+        weightedMode: 3
+        inWeight: 0.5472777
+        outWeight: 0.38847604
+      - serializedVersion: 3
+        time: 0.57895225
+        value: 0.99975276
+        inSlope: 1.7491093
+        outSlope: 1.7491093
+        tangentMode: 0
+        weightedMode: 3
+        inWeight: 0.2830071
+        outWeight: 0.5816803
+      - serializedVersion: 3
+        time: 0.70127666
+        value: 1.8605393
+        inSlope: 35.69712
+        outSlope: 35.69712
+        tangentMode: 0
+        weightedMode: 3
+        inWeight: 0.15247886
+        outWeight: 0.45909467
+      - serializedVersion: 3
+        time: 0.77947617
+        value: 3.2758198
+        inSlope: 26.684761
+        outSlope: 26.684761
+        tangentMode: 0
+        weightedMode: 3
+        inWeight: 0.46878695
+        outWeight: 0.17035024
+      - serializedVersion: 3
+        time: 0.9988444
+        value: 5.0726748
+        inSlope: 16.19358
+        outSlope: 16.19358
+        tangentMode: 0
+        weightedMode: 1
+        inWeight: 0.3462198
+        outWeight: 0
+      m_PreInfinity: 2
+      m_PostInfinity: 2
+      m_RotationOrder: 4
+--- !u!114 &863829646
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 863829642}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f5f8921fa6b485942a5d6c6fbda92b88, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  biomes:
+  - name: Plains
+    color: {r: 0.06860058, g: 0.4716981, b: 0.028924897, a: 0}
+    redistribution:
+      serializedVersion: 2
+      m_Curve:
+      - serializedVersion: 3
+        time: 0
+        value: 0
+        inSlope: 1
+        outSlope: 1
+        tangentMode: 34
+        weightedMode: 0
+        inWeight: 0
+        outWeight: 0
+      - serializedVersion: 3
+        time: 1
+        value: 1
+        inSlope: 1
+        outSlope: 1
+        tangentMode: 34
+        weightedMode: 0
+        inWeight: 0
+        outWeight: 0
+      m_PreInfinity: 2
+      m_PostInfinity: 2
+      m_RotationOrder: 0
+  - name: Ocean
+    color: {r: 0.08317016, g: 0.5028877, b: 0.8396226, a: 0}
+    redistribution:
+      serializedVersion: 2
+      m_Curve:
+      - serializedVersion: 3
+        time: 0
+        value: 0
+        inSlope: -0.30407208
+        outSlope: -0.30407208
+        tangentMode: 34
+        weightedMode: 0
+        inWeight: 0
+        outWeight: 0.33333334
+      - serializedVersion: 3
+        time: 0.4117968
+        value: -0.12521592
+        inSlope: -0.90003073
+        outSlope: -0.90003073
+        tangentMode: 34
+        weightedMode: 0
+        inWeight: 0.33333334
+        outWeight: 0.33333334
+      - serializedVersion: 3
+        time: 1.0004116
+        value: -1.0057774
+        inSlope: -0.1022637
+        outSlope: -0.1022637
+        tangentMode: 0
+        weightedMode: 0
+        inWeight: 0.96001446
+        outWeight: 0
+      m_PreInfinity: 2
+      m_PostInfinity: 2
+      m_RotationOrder: 0
+  - name: Beach
+    color: {r: 0.74894255, g: 0.7830189, b: 0.07756319, a: 0}
+    redistribution:
+      serializedVersion: 2
+      m_Curve:
+      - serializedVersion: 3
+        time: 0
+        value: 0
+        inSlope: 1
+        outSlope: 1
+        tangentMode: 34
+        weightedMode: 0
+        inWeight: 0
+        outWeight: 0
+      - serializedVersion: 3
+        time: 1
+        value: 1
+        inSlope: 1
+        outSlope: 1
+        tangentMode: 34
+        weightedMode: 0
+        inWeight: 0
+        outWeight: 0
+      m_PreInfinity: 2
+      m_PostInfinity: 2
+      m_RotationOrder: 0
+  - name: Mountains
+    color: {r: 0.4245283, g: 0.4245283, b: 0.4245283, a: 0}
+    redistribution:
+      serializedVersion: 2
+      m_Curve:
+      - serializedVersion: 3
+        time: 0.0048179626
+        value: 0.009399414
+        inSlope: 0
+        outSlope: 0
+        tangentMode: 0
+        weightedMode: 0
+        inWeight: 0
+        outWeight: 0
+      - serializedVersion: 3
+        time: 0.29570386
+        value: 0.68374574
+        inSlope: -0.21640778
+        outSlope: -0.21640778
+        tangentMode: 0
+        weightedMode: 0
+        inWeight: 0.33333334
+        outWeight: 0.18907902
+      - serializedVersion: 3
+        time: 0.5087876
+        value: 1.4014212
+        inSlope: 11.193279
+        outSlope: 11.193279
+        tangentMode: 0
+        weightedMode: 3
+        inWeight: 0.33333334
+        outWeight: 0.33333334
+      - serializedVersion: 3
+        time: 0.99472046
+        value: 5.9593077
+        inSlope: 10.632742
+        outSlope: 10.632742
+        tangentMode: 0
+        weightedMode: 0
+        inWeight: 0.077277325
+        outWeight: 0
+      m_PreInfinity: 2
+      m_PostInfinity: 2
+      m_RotationOrder: 0
 --- !u!1 &963194225
 GameObject:
   m_ObjectHideFlags: 0
