@@ -1,0 +1,59 @@
+// Each #kernel tells which function to compile; you can have many kernels
+#pragma kernel CSMain
+#include "Assets/Scripts/ClassicNoise2D.hlsl"
+#include "Assets/Scripts/noiseSimplex.cginc"
+
+// Create a RenderTexture with enableRandomWrite flag and set it
+// with cs.SetTexture
+
+RWStructuredBuffer<float3> verticesBuffer;
+
+float chunkOffsetX;
+float chunkOffsetZ;
+
+float scale;
+int seed;
+int octaves;
+float amplitude;
+float persistence;
+float frequency;
+float lacunarity;
+float oceanLevel;
+StructuredBuffer<float2> octaveOffsetsBuffer;
+
+
+float GetPoint(float x, float y) 
+{
+	float height = 0;
+	float tempAmplitude = amplitude;
+	float tempFrequency = frequency;
+
+	[loop]
+	for (int i = 0; i < octaves; i++)
+	{
+		float offsetX = x / scale * tempFrequency + octaveOffsetsBuffer[i].x;
+		float offsetY = y / scale * tempFrequency + octaveOffsetsBuffer[i].y;
+
+		height += ClassicNoise(float2(seed + offsetX + 0.5f, seed + offsetY + 0.5f)) * tempAmplitude;
+
+		tempAmplitude *= persistence;
+		tempFrequency *= lacunarity;
+	}
+	if (height < oceanLevel) 
+	{
+		return oceanLevel;
+	}
+	if (height > 0) 
+	{
+		height = pow(height, 1.35f);
+	}
+
+
+	return height;
+}
+
+[numthreads(32,32,1)]
+void CSMain (uint3 id : SV_GroupThreadID)
+{ 
+	verticesBuffer[id.x * 32 + id.y] = float3(id.x, GetPoint(id.x + chunkOffsetX, id.y + chunkOffsetZ), id.y);
+}
